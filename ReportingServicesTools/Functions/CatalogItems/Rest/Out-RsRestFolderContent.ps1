@@ -93,6 +93,10 @@ function Out-RsRestFolderContent
     Begin
     {
         $WebSession = New-RsRestSessionHelper -BoundParameters $PSBoundParameters
+        if ($null -ne $WebSession.Credentials -and $null -eq $Credential) {
+            Write-Verbose "Using credentials from WebSession"
+            $Credential = New-Object System.Management.Automation.PSCredential "$($WebSession.Credentials.UserName)@$($WebSession.Credentials.Domain)", $WebSession.Credentials.SecurePassword 
+        }
         $ReportPortalUri = Get-RsPortalUriHelper -WebSession $WebSession
         $catalogItemsByPathApiV1 = $ReportPortalUri + "api/v1.0/CatalogItemByPath(path=@path)?@path=%27{0}%27"
         $folderCatalogItemsApiV1 = $ReportPortalUri + "api/v1.0/CatalogItems({0})/Model.Folder/CatalogItems"
@@ -108,11 +112,11 @@ function Out-RsRestFolderContent
                 $url = [string]::Format($catalogItemsByPathApiV1, $RsFolder)
                 if ($Credential -ne $null)
                 {
-                    $response = Invoke-WebRequest -Uri $url -Method Get -Credential $Credential -Verbose:$false
+                    $response = Invoke-WebRequest -Uri $url -Method Get -Credential $Credential -UseBasicParsing -Verbose:$false
                 }
                 else
                 {
-                    $response = Invoke-WebRequest -Uri $url -Method Get -UseDefaultCredentials -Verbose:$false
+                    $response = Invoke-WebRequest -Uri $url -Method Get -UseDefaultCredentials -UseBasicParsing -Verbose:$false
                 }
             }
             catch
@@ -128,11 +132,11 @@ function Out-RsRestFolderContent
                 $url = [string]::Format($folderCatalogItemsApiV1, $folder.Id)
                 if ($Credential -ne $null)
                 {
-                    $response = Invoke-WebRequest -Uri $url -Method Get -Credential $Credential -Verbose:$false
+                    $response = Invoke-WebRequest -Uri $url -Method Get -Credential $Credential -UseBasicParsing -Verbose:$false
                 }
                 else
                 {
-                    $response = Invoke-WebRequest -Uri $url -Method Get -UseDefaultCredentials -Verbose:$false
+                    $response = Invoke-WebRequest -Uri $url -Method Get -UseDefaultCredentials -UseBasicParsing -Verbose:$false
                 }
             }
             catch
@@ -148,11 +152,11 @@ function Out-RsRestFolderContent
                 $url = [string]::Format($folderCatalogItemsApiLatest, $RsFolder)
                 if ($Credential -ne $null)
                 {
-                    $response = Invoke-WebRequest -Uri $url -Method Get -Credential $Credential -Verbose:$false
+                    $response = Invoke-WebRequest -Uri $url -Method Get -Credential $Credential -UseBasicParsing -Verbose:$false
                 }
                 else
                 {
-                    $response = Invoke-WebRequest -Uri $url -Method Get -UseDefaultCredentials -Verbose:$false
+                    $response = Invoke-WebRequest -Uri $url -Method Get -UseDefaultCredentials -UseBasicParsing -Verbose:$false
                 }
             }
             catch

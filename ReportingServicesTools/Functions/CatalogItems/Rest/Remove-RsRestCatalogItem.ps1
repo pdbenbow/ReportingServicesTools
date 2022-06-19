@@ -57,6 +57,10 @@ function Remove-RsRestCatalogItem
     Begin
     {
         $WebSession = New-RsRestSessionHelper -BoundParameters $PSBoundParameters
+        if ($null -ne $WebSession.Credentials -and $null -eq $Credential) {
+            Write-Verbose "Using credentials from WebSession"
+            $Credential = New-Object System.Management.Automation.PSCredential "$($WebSession.Credentials.UserName)@$($WebSession.Credentials.Domain)", $WebSession.Credentials.SecurePassword 
+        }
         $ReportPortalUri = Get-RsPortalUriHelper -WebSession $WebSession
         $catalogItemsUri = $ReportPortalUri + "api/$RestApiVersion/CatalogItems(Path='{0}')"
     }
@@ -76,11 +80,11 @@ function Remove-RsRestCatalogItem
     
                 if ($Credential -ne $null)
                 {
-                    Invoke-WebRequest -Uri $catalogItemsUri -Method Delete -WebSession $WebSession -Credential $Credential -Verbose:$false | Out-Null
+                    Invoke-WebRequest -Uri $catalogItemsUri -Method Delete -WebSession $WebSession -Credential $Credential -UseBasicParsing -Verbose:$false | Out-Null
                 }
                 else
                 {
-                    Invoke-WebRequest -Uri $catalogItemsUri -Method Delete -WebSession $WebSession -UseDefaultCredentials -Verbose:$false | Out-Null
+                    Invoke-WebRequest -Uri $catalogItemsUri -Method Delete -WebSession $WebSession -UseDefaultCredentials -UseBasicParsing -Verbose:$false | Out-Null
                 }
     
                 Write-Verbose "Catalog item $RsItem was deleted successfully!"

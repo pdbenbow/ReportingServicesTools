@@ -97,6 +97,10 @@ function Write-RsRestFolderContent
     Begin
     {
         $WebSession = New-RsRestSessionHelper -BoundParameters $PSBoundParameters
+        if ($null -ne $WebSession.Credentials -and $null -eq $Credential) {
+            Write-Verbose "Using credentials from WebSession"
+            $Credential = New-Object System.Management.Automation.PSCredential "$($WebSession.Credentials.UserName)@$($WebSession.Credentials.Domain)", $WebSession.Credentials.SecurePassword 
+        }
         $ReportPortalUri = Get-RsPortalUriHelper -WebSession $WebSession
         $catalogItemsUri = $ReportPortalUri + "api/$RestApiVersion/CatalogItems"
         $folderUri = $ReportPortalUri + "api/$RestApiVersion/Folders(Path='{0}')"
@@ -154,11 +158,11 @@ function Write-RsRestFolderContent
                     # Try to get folder info
                     if ($Credential -ne $null)
                     {
-                        $response = Invoke-WebRequest -Uri $uri -Method Get -WebSession $WebSession -Credential $Credential -Verbose:$false
+                        $response = Invoke-WebRequest -Uri $uri -Method Get -WebSession $WebSession -Credential $Credential -UseBasicParsing -Verbose:$false
                     }
                     else
                     {
-                        $response = Invoke-WebRequest -Uri $uri -Method Get -WebSession $WebSession -UseDefaultCredentials -Verbose:$false
+                        $response = Invoke-WebRequest -Uri $uri -Method Get -WebSession $WebSession -UseDefaultCredentials -UseBasicParsing -Verbose:$false
                     }
 
                     # parsing response to get folder name

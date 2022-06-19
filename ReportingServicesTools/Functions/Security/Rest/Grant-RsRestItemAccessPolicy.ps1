@@ -91,6 +91,10 @@ function Grant-RsRestItemAccessPolicy
     Begin
     {
         $WebSession = New-RsRestSessionHelper -BoundParameters $PSBoundParameters
+        if ($null -ne $WebSession.Credentials -and $null -eq $Credential) {
+            Write-Verbose "Using credentials from WebSession"
+            $Credential = New-Object System.Management.Automation.PSCredential "$($WebSession.Credentials.UserName)@$($WebSession.Credentials.Domain)", $WebSession.Credentials.SecurePassword 
+        }
         $ReportPortalUri = Get-RsPortalUriHelper -WebSession $WebSession
     }
     Process
@@ -147,8 +151,14 @@ function Grant-RsRestItemAccessPolicy
 
             $payloadJson = $response | ConvertTo-Json -Depth 15
             Write-Verbose "$payloadJson"
-            $response = Invoke-RestMethod -Uri $PolicyUri -Method Put -WebSession $WebSession -UseDefaultCredentials -Body ([System.Text.Encoding]::UTF8.GetBytes($payloadJson)) -ContentType "application/json" -Verbose:$false
-
+            if ($Credential -ne $null)
+            {
+                $response = Invoke-RestMethod -Uri $PolicyUri -Method Put -WebSession $WebSession -Credential $Credential -Body ([System.Text.Encoding]::UTF8.GetBytes($payloadJson)) -ContentType "application/json"  -Verbose:$false
+            }
+            else
+            {
+                $response = Invoke-RestMethod -Uri $PolicyUri -Method Put -WebSession $WebSession -UseDefaultCredentials -Body ([System.Text.Encoding]::UTF8.GetBytes($payloadJson)) -ContentType "application/json" -Verbose:$false
+            }
             return $response
         }
         catch

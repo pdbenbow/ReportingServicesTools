@@ -72,6 +72,10 @@ function Get-RsRestItemDataModelParameter
     Begin
     {
         $WebSession = New-RsRestSessionHelper -BoundParameters $PSBoundParameters
+        if ($null -ne $WebSession.Credentials -and $null -eq $Credential) {
+            Write-Verbose "Using credentials from WebSession"
+            $Credential = New-Object System.Management.Automation.PSCredential "$($WebSession.Credentials.UserName)@$($WebSession.Credentials.Domain)", $WebSession.Credentials.SecurePassword 
+        }
         $ReportPortalUri = Get-RsPortalUriHelper -WebSession $WebSession
         $catalogItemsUri = $ReportPortalUri + "api/$RestApiVersion/CatalogItems(Path='{0}')"
         $parametersUri = $ReportPortalUri + "api/$RestApiVersion/{0}(Path='{1}')?`$expand=DataModelParameters"
@@ -84,11 +88,11 @@ function Get-RsRestItemDataModelParameter
             $catalogItemsUri = [String]::Format($catalogItemsUri, $RsItem)
             if ($Credential -ne $null)
             {
-                $response = Invoke-WebRequest -Uri $catalogItemsUri -Method Get -WebSession $WebSession -Credential $Credential -Verbose:$false
+                $response = Invoke-WebRequest -Uri $catalogItemsUri -Method Get -WebSession $WebSession -Credential $Credential -UseBasicParsing -Verbose:$false
             }
             else
             {
-                $response = Invoke-WebRequest -Uri $catalogItemsUri -Method Get -WebSession $WebSession -UseDefaultCredentials -Verbose:$false
+                $response = Invoke-WebRequest -Uri $catalogItemsUri -Method Get -WebSession $WebSession -UseDefaultCredentials -UseBasicParsing -Verbose:$false
             }
 
             $item = ConvertFrom-Json $response.Content
@@ -99,11 +103,11 @@ function Get-RsRestItemDataModelParameter
 
             if ($Credential -ne $null)
             {
-                $paramResponse = Invoke-WebRequest -Uri $parametersUri -Method Get -WebSession $WebSession -Credential $Credential -Verbose:$false
+                $paramResponse = Invoke-WebRequest -Uri $parametersUri -Method Get -WebSession $WebSession -Credential $Credential -UseBasicParsing -Verbose:$false
             }
             else
             {
-                $paramResponse = Invoke-WebRequest -Uri $parametersUri -Method Get -WebSession $WebSession -UseDefaultCredentials -Verbose:$false
+                $paramResponse = Invoke-WebRequest -Uri $parametersUri -Method Get -WebSession $WebSession -UseDefaultCredentials -UseBasicParsing -Verbose:$false
             }
 
             Write-Verbose $paramResponse

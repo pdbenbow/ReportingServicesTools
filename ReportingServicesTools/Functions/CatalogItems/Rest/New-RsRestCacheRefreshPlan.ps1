@@ -103,6 +103,10 @@ function New-RsRestCacheRefreshPlan
     Begin
     {
         $WebSession = New-RsRestSessionHelper -BoundParameters $PSBoundParameters
+        if ($null -ne $WebSession.Credentials -and $null -eq $Credential) {
+            Write-Verbose "Using credentials from WebSession"
+            $Credential = New-Object System.Management.Automation.PSCredential "$($WebSession.Credentials.UserName)@$($WebSession.Credentials.Domain)", $WebSession.Credentials.SecurePassword 
+        }
         $ReportPortalUri = Get-RsPortalUriHelper -WebSession $WebSession
         $refreshplansUri = $ReportPortalUri + "api/$RestApiVersion/CacheRefreshPlans"      
     }
@@ -133,7 +137,14 @@ function New-RsRestCacheRefreshPlan
                 $payloadJson = ConvertTo-Json $payload -Depth 15
                 Write-Verbose "Payload: $payloadJson"
 
-                $response = Invoke-RestMethod -Uri $refreshplansUri -Method Post -WebSession $WebSession -Body ([System.Text.Encoding]::UTF8.GetBytes($payloadJson)) -ContentType "application/json" -UseDefaultCredentials -Verbose:$false
+                if ($Credential -ne $null)
+                {
+                    $response = Invoke-WebRequest -Uri $refreshplansUri -Method Post -WebSession $WebSession -Body ([System.Text.Encoding]::UTF8.GetBytes($payloadJson)) -ContentType "application/json" -Credential $Credential -UseBasicParsing -Verbose:$false
+                }
+                else
+                {
+                    $response = Invoke-WebRequest -Uri $refreshplansUri -Method Post -WebSession $WebSession -Body ([System.Text.Encoding]::UTF8.GetBytes($payloadJson)) -ContentType "application/json" -UseDefaultCredentials -UseBasicParsing -Verbose:$false
+                }
 
                 Write-Verbose "Schedule payload for $RsItem was created successfully!"
                 return $response

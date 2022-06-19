@@ -81,6 +81,10 @@ function Get-RsRestItemAccessPolicy
     Begin
     {
         $WebSession = New-RsRestSessionHelper -BoundParameters $PSBoundParameters
+        if ($null -ne $WebSession.Credentials -and $null -eq $Credential) {
+            Write-Verbose "Using credentials from WebSession"
+            $Credential = New-Object System.Management.Automation.PSCredential "$($WebSession.Credentials.UserName)@$($WebSession.Credentials.Domain)", $WebSession.Credentials.SecurePassword 
+        }
         $ReportPortalUri = Get-RsPortalUriHelper -WebSession $WebSession
         $PolicyUri = $ReportPortalUri + "api/$RestApiVersion/CatalogItems({0})/Policies"
     }
@@ -154,7 +158,14 @@ function Get-RsRestItemAccessPolicy
                     $PolicyUri = $ReportPortalUri + "api/$RestApiVersion/CatalogItems({0})/Policies"
                     $PolicyUri = [String]::Format($PolicyUri, $ChildItem.Id)
             
-                    $childPolicies = Invoke-RestMethod -Uri $PolicyUri -Method Get -WebSession $WebSession -UseDefaultCredentials -Verbose:$false
+                    if ($Credential -ne $null)
+                    {
+                        $childPolicies = Invoke-RestMethod -Uri $PolicyUri -Method Get -WebSession $WebSession -Credential $Credential -Verbose:$false
+                    }
+                    else
+                    {
+                        $childPolicies = Invoke-RestMethod -Uri $PolicyUri -Method Get -WebSession $WebSession -UseDefaultCredentials -Verbose:$false
+                    }
     
                     # Filter Polices by Identity
                     if($Identity) {

@@ -29,7 +29,7 @@ function New-RsRestFolder
             Specify the session to be used when making calls to REST Endpoint.
 
         .EXAMPLE
-            New-RsRestFolder -RsFolder MyNewFolder -RsFolder /
+            New-RsRestFolder -FolderName MyNewFolder -RsFolder /
 
             Description
             -----------
@@ -65,6 +65,10 @@ function New-RsRestFolder
     Begin
     {
         $WebSession = New-RsRestSessionHelper -BoundParameters $PSBoundParameters
+        if ($null -ne $WebSession.Credentials -and $null -eq $Credential) {
+            Write-Verbose "Using credentials from WebSession"
+            $Credential = New-Object System.Management.Automation.PSCredential "$($WebSession.Credentials.UserName)@$($WebSession.Credentials.Domain)", $WebSession.Credentials.SecurePassword 
+        }
         $ReportPortalUri = Get-RsPortalUriHelper -WebSession $WebSession
         $foldersUri = $ReportPortalUri + "api/$RestApiVersion/Folders"
     }
@@ -91,11 +95,11 @@ function New-RsRestFolder
 
             if ($Credential -ne $null)
             {
-                $response = Invoke-WebRequest -Uri $foldersUri -Method Post -WebSession $WebSession -Body ([System.Text.Encoding]::UTF8.GetBytes($payloadJson)) -ContentType "application/json" -Credential $Credential -Verbose:$false
+                $response = Invoke-WebRequest -Uri $foldersUri -Method Post -WebSession $WebSession -Body ([System.Text.Encoding]::UTF8.GetBytes($payloadJson)) -ContentType "application/json" -Credential $Credential -UseBasicParsing -Verbose:$false
             }
             else
             {
-                $response = Invoke-WebRequest -Uri $foldersUri -Method Post -WebSession $WebSession -Body ([System.Text.Encoding]::UTF8.GetBytes($payloadJson)) -ContentType "application/json" -UseDefaultCredentials -Verbose:$false
+                $response = Invoke-WebRequest -Uri $foldersUri -Method Post -WebSession $WebSession -Body ([System.Text.Encoding]::UTF8.GetBytes($payloadJson)) -ContentType "application/json" -UseDefaultCredentials -UseBasicParsing -Verbose:$false
             }
 
             Write-Verbose "Folder $TargetFolderPath was created successfully!"

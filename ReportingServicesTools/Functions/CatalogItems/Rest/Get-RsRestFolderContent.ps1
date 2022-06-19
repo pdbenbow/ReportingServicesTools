@@ -67,6 +67,10 @@ function Get-RsRestFolderContent
     Begin
     {
         $WebSession = New-RsRestSessionHelper -BoundParameters $PSBoundParameters
+        if ($null -ne $WebSession.Credentials -and $null -eq $Credential) {
+            Write-Verbose "Using credentials from WebSession"
+            $Credential = New-Object System.Management.Automation.PSCredential "$($WebSession.Credentials.UserName)@$($WebSession.Credentials.Domain)", $WebSession.Credentials.SecurePassword 
+        }
         $ReportPortalUri = Get-RsPortalUriHelper -WebSession $WebSession
         $catalogItemsUri = $ReportPortalUri + "api/$RestApiVersion/Folders(Path='{0}')/CatalogItems?`$expand=Properties"
     }
@@ -78,11 +82,11 @@ function Get-RsRestFolderContent
             $url = [String]::Format($catalogItemsUri, $RsFolder)
             if ($Credential -ne $null)
             {
-                $response = Invoke-WebRequest -Uri $url -Method Get -WebSession $WebSession -Credential $Credential -Verbose:$false
+                $response = Invoke-WebRequest -Uri $url -Method Get -WebSession $WebSession -Credential $Credential -UseBasicParsing -Verbose:$false
             }
             else
             {
-                $response = Invoke-WebRequest -Uri $url -Method Get -WebSession $WebSession -UseDefaultCredentials -Verbose:$false
+                $response = Invoke-WebRequest -Uri $url -Method Get -WebSession $WebSession -UseDefaultCredentials -UseBasicParsing -Verbose:$false
             }
 
             $catalogItems = (ConvertFrom-Json $response.Content).value

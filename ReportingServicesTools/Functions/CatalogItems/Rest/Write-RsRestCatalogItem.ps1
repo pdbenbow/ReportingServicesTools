@@ -113,6 +113,10 @@ function Write-RsRestCatalogItem
     Begin
     {
         $WebSession = New-RsRestSessionHelper -BoundParameters $PSBoundParameters
+        if ($null -ne $WebSession.Credentials -and $null -eq $Credential) {
+            Write-Verbose "Using credentials from WebSession"
+            $Credential = New-Object System.Management.Automation.PSCredential "$($WebSession.Credentials.UserName)@$($WebSession.Credentials.Domain)", $WebSession.Credentials.SecurePassword 
+        }
         $ReportPortalUri = Get-RsPortalUriHelper -WebSession $WebSession
         $catalogItemsUri = $ReportPortalUri + "api/$RestApiVersion/CatalogItems"
         if ($RestApiVersion -eq "v1.0")
@@ -324,11 +328,11 @@ function Write-RsRestCatalogItem
 
                 if ($Credential -ne $null)
                 {
-                    Invoke-WebRequest -Uri $endpointUrl -Method Post -WebSession $WebSession -Body $requestBody -ContentType $contentType -Credential $Credential -Verbose:$false | Out-Null
+                    Invoke-WebRequest -Uri $endpointUrl -Method Post -WebSession $WebSession -Body $requestBody -ContentType $contentType -Credential $Credential -UseBasicParsing -Verbose:$false | Out-Null
                 }
                 else
                 {
-                    Invoke-WebRequest -Uri $endpointUrl -Method Post -WebSession $WebSession -Body $requestBody -ContentType $contentType -UseDefaultCredentials -Verbose:$false | Out-Null
+                    Invoke-WebRequest -Uri $endpointUrl -Method Post -WebSession $WebSession -Body $requestBody -ContentType $contentType -UseDefaultCredentials -UseBasicParsing -Verbose:$false | Out-Null
                 }
 
                 Write-Verbose "$EntirePath was uploaded to $RsFolder successfully!"
@@ -343,11 +347,11 @@ function Write-RsRestCatalogItem
                         $uri = [String]::Format($catalogItemsByPathApi, $itemPath)
                         if ($Credential -ne $null)
                         {
-                            $response = Invoke-WebRequest -Uri $uri -Method Get -WebSession $WebSession -Credential $Credential -Verbose:$false
+                            $response = Invoke-WebRequest -Uri $uri -Method Get -WebSession $WebSession -Credential $Credential -UseBasicParsing -Verbose:$false
                         }
                         else
                         {
-                            $response = Invoke-WebRequest -Uri $uri -Method Get -WebSession $WebSession -UseDefaultCredentials -Verbose:$false
+                            $response = Invoke-WebRequest -Uri $uri -Method Get -WebSession $WebSession -UseDefaultCredentials -UseBasicParsing -Verbose:$false
                         }
 
                         # parsing response to get Id
@@ -358,11 +362,11 @@ function Write-RsRestCatalogItem
                         $uri = [String]::Format($catalogItemsUpdateUri, $itemId)
                         if ($Credential -ne $null)
                         {
-                            Invoke-WebRequest -Uri $uri -Method Put -WebSession $WebSession -Body ([System.Text.Encoding]::UTF8.GetBytes($payloadJson)) -ContentType "application/json" -Credential $Credential -Verbose:$false | Out-Null
+                            Invoke-WebRequest -Uri $uri -Method Put -WebSession $WebSession -Body ([System.Text.Encoding]::UTF8.GetBytes($payloadJson)) -ContentType "application/json" -Credential $Credential -UseBasicParsing -Verbose:$false | Out-Null
                         }
                         else
                         {
-                            Invoke-WebRequest -Uri $uri -Method Put -WebSession $WebSession -Body ([System.Text.Encoding]::UTF8.GetBytes($payloadJson)) -ContentType "application/json" -UseDefaultCredentials -Verbose:$false | Out-Null
+                            Invoke-WebRequest -Uri $uri -Method Put -WebSession $WebSession -Body ([System.Text.Encoding]::UTF8.GetBytes($payloadJson)) -ContentType "application/json" -UseDefaultCredentials -UseBasicParsing -Verbose:$false | Out-Null
                         }
                         Write-Verbose "$EntirePath was uploaded to $RsFolder successfully!"
                     }
